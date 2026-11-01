@@ -48,8 +48,13 @@
 
                 <!-- Action Toolbar Buttons -->
                 <div class="flex items-center space-x-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 mobile-scroll shrink-0">
+                    <!-- Tombol Refresh Data -->
+                    <button id="refreshBtn" onclick="fetchFromGAS()" class="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
+                        <i id="refreshIcon" class="fa-solid fa-rotate"></i> <span id="refreshText">Refresh Data</span>
+                    </button>
+
                     <!-- Tombol Upload ke Google Sheet (1 Arah) -->
-                    <button id="uploadBtn" onclick="manualUploadToGAS()" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
+                    <button id="uploadBtn" onclick="manualUploadToSheet()" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
                         <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up"></i> <span id="uploadText">Upload ke Sheet</span>
                     </button>
 
@@ -71,6 +76,10 @@
 
                     <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
                         <i class="fa-solid fa-plus"></i> Input Baru
+                    </button>
+
+                    <button onclick="openGasModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs p-2 transition" title="Atur URL Koneksi Google Apps Script">
+                        <i class="fa-solid fa-gear text-base"></i>
                     </button>
                 </div>
             </div>
@@ -269,6 +278,24 @@
 
     </main>
 
+    <!-- Modal Configuration Google Apps Script URL -->
+    <div id="gasModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4 no-print">
+        <div class="bg-white border border-slate-300 max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base font-bold text-slate-800">Pengaturan Google Apps Script URL</h3>
+                <button onclick="closeGasModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <p class="text-slate-600">Masukkan URL Web App hasil deploy Google Apps Script Anda untuk sinkronisasi:</p>
+                <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-300 p-2.5 outline-none font-mono text-[11px]">
+            </div>
+            <div class="flex justify-end space-x-2 pt-3 border-t text-xs">
+                <button onclick="closeGasModal()" class="px-3 py-1.5 border border-slate-300 text-slate-600 hover:bg-slate-50">Batal</button>
+                <button onclick="saveGasUrl()" class="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700">Simpan URL</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Form Input & Edit Data -->
     <div id="shipmentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-3 sm:p-4 no-print overflow-y-auto">
         <div class="bg-white border border-slate-300 max-w-3xl w-full p-4 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
@@ -369,7 +396,7 @@
 
                 <div class="flex justify-end space-x-2 pt-4 border-t sticky bottom-0 bg-white">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Simpan Data & Kirim ke Sheet</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Simpan & Kirim ke Sheet</button>
                 </div>
             </form>
         </div>
@@ -377,108 +404,38 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // URL Web App Google Apps Script 1 Arah (POST)
+        // URL Web App Google Apps Script
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxU1ngTBMvfUyQq8hqP-MbFaWxTvXo4EjO-9jJcIRv7IJ57Pmy1ndciJkqVvMAzKdMrUQ/exec";
 
-        // Data statis lokal untuk tampilan dashboard awal
-        let bargingData = [
-            {
-                no_shipment: 26,
-                nama_tb_tongkang: "Mega Sukses XVIII / Box Sepuluh",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-10",
-                tambat_tali_jam: "10:15",
-                draft_inisial: 1439.840,
-                draft_inter: 7783.693,
-                draft_final: 6343.853,
-                ritase_dt: 256,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 47.45,
-                coa_barging_sio2: 12.52,
-                coa_barging_rsio2: 4.35,
-                loading_start_tgl: "2026-10-10",
-                loading_start_jam: "14:00",
-                loading_finish_tgl: "2026-10-11",
-                loading_finish_jam: "14:41",
-                waktu_loading_total: "24:41:00",
-                lepas_tali_tgl: "2026-10-11",
-                lepas_tali_jam: "14:30",
-                keberangkatan_tgl: "2026-10-15",
-                keberangkatan_jam: "08:55",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
-            },
-            {
-                no_shipment: 27,
-                nama_tb_tongkang: "Prima Sakti I / Finacia 82",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-13",
-                tambat_tali_jam: "09:15",
-                draft_inisial: 1216.861,
-                draft_inter: 7737.915,
-                draft_final: 6521.054,
-                ritase_dt: 259,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 48.73,
-                coa_barging_sio2: 13.27,
-                coa_barging_rsio2: 4.84,
-                loading_start_tgl: "2026-10-16",
-                loading_start_jam: "13:05",
-                loading_finish_tgl: "2026-10-17",
-                loading_finish_jam: "13:15",
-                waktu_loading_total: "24:10:00",
-                lepas_tali_tgl: "2026-10-17",
-                lepas_tali_jam: "14:30",
-                keberangkatan_tgl: "2026-10-18",
-                keberangkatan_jam: "14:00",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 49.20,
-                coa_discharge_sio2: 11.70,
-                coa_discharge_rsio2: 3.81
-            },
-            {
-                no_shipment: 28,
-                nama_tb_tongkang: "Entenebe Power II / Citerup 2",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-22",
-                tambat_tali_jam: "16:27",
-                draft_inisial: 1278.793,
-                draft_inter: 8116.953,
-                draft_final: 6838.160,
-                ritase_dt: 277,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 48.10,
-                coa_barging_sio2: 12.80,
-                coa_barging_rsio2: 4.20,
-                loading_start_tgl: "2026-10-22",
-                loading_start_jam: "18:56",
-                loading_finish_tgl: "2026-10-23",
-                loading_finish_jam: "17:43",
-                waktu_loading_total: "22:47:00",
-                lepas_tali_tgl: "2026-10-23",
-                lepas_tali_jam: "17:57",
-                keberangkatan_tgl: "2026-10-24",
-                keberangkatan_jam: "13:16",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 48.50,
-                coa_discharge_sio2: 12.10,
-                coa_discharge_rsio2: 4.00
-            }
-        ];
-
+        let bargingData = [];
         let currentFilteredData = [];
         let draftChart = null;
         let coaChart = null;
 
-        // FUNGSI PARSER ANGKA
+        function getGasUrl() {
+            return localStorage.getItem('gasUrl') || DEFAULT_GAS_URL;
+        }
+
+        function openGasModal() {
+            document.getElementById('gasUrlInput').value = getGasUrl();
+            document.getElementById('gasModal').classList.remove('hidden');
+            document.getElementById('gasModal').classList.add('flex');
+        }
+
+        function closeGasModal() {
+            document.getElementById('gasModal').classList.add('hidden');
+            document.getElementById('gasModal').classList.remove('flex');
+        }
+
+        function saveGasUrl() {
+            const url = document.getElementById('gasUrlInput').value.trim();
+            if (url) {
+                localStorage.setItem('gasUrl', url);
+            }
+            closeGasModal();
+            fetchFromGAS();
+        }
+
         function parseNum(val) {
             if (val === null || val === undefined || val === "" || val === "-") return 0;
             if (typeof val === 'number') return val;
@@ -505,10 +462,65 @@
             return timeStr ? `${formattedDate} ${timeStr}` : formattedDate;
         }
 
-        // Fungsi Kirim Data 1 Arah (POST) dari Dashboard ke Google Sheet
-        async function saveShipmentToGAS(itemData) {
+        // FUNGSI UTAMA: Mengambil data otomatis dari Google Sheet (GET)
+        async function fetchFromGAS() {
+            const url = getGasUrl();
+            if (!url) return;
+
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+            const refreshText = document.getElementById('refreshText');
+
+            if (refreshBtn) refreshBtn.disabled = true;
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+            if (refreshText) refreshText.innerText = "Refreshing...";
+
             try {
-                await fetch(DEFAULT_GAS_URL, {
+                const res = await fetch(url);
+                const rawData = await res.json();
+                
+                if (Array.isArray(rawData) && rawData.length > 0) {
+                    bargingData = rawData.map(item => ({
+                        ...item,
+                        no_shipment: parseNum(item.no_shipment),
+                        kapasitas: parseNum(item.kapasitas) || 300,
+                        draft_inisial: parseNum(item.draft_inisial),
+                        draft_inter: parseNum(item.draft_inter),
+                        draft_final: parseNum(item.draft_final),
+                        ritase_dt: parseNum(item.ritase_dt),
+                        param_max_al2o3: parseNum(item.param_max_al2o3) || 46,
+                        param_max_sio2: parseNum(item.param_max_sio2) || 15,
+                        param_max_rsio2: parseNum(item.param_max_rsio2) || 5,
+                        coa_barging_al2o3: parseNum(item.coa_barging_al2o3),
+                        coa_barging_sio2: parseNum(item.coa_barging_sio2),
+                        coa_barging_rsio2: parseNum(item.coa_barging_rsio2),
+                        coa_discharge_al2o3: parseNum(item.coa_discharge_al2o3),
+                        coa_discharge_sio2: parseNum(item.coa_discharge_sio2),
+                        coa_discharge_rsio2: parseNum(item.coa_discharge_rsio2)
+                    }));
+
+                    renderTable();
+                    if (refreshText) refreshText.innerText = "Updated";
+                }
+            } catch (err) {
+                console.error("Gagal mengambil data dari Google Sheet:", err);
+                if (refreshText) refreshText.innerText = "Failed";
+            } finally {
+                if (refreshBtn) refreshBtn.disabled = false;
+                if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+                setTimeout(() => {
+                    if (refreshText) refreshText.innerText = "Refresh Data";
+                }, 2000);
+            }
+        }
+
+        // FUNGSI: Kirim Data 1 Arah ke Google Sheet (POST)
+        async function sendToGoogleSheet(itemData) {
+            const url = getGasUrl();
+            if (!url) return;
+
+            try {
+                await fetch(url, {
                     method: "POST",
                     mode: "no-cors",
                     headers: {
@@ -516,43 +528,35 @@
                     },
                     body: JSON.stringify(itemData)
                 });
-                alert("Data berhasil di-upload ke Google Sheet!");
+                console.log("Data berhasil dikirim ke Google Sheet");
             } catch (error) {
                 console.error("Gagal mengirim data ke Google Sheet:", error);
-                alert("Gagal mengunggah data ke Google Sheet.");
             }
         }
 
-        // Tombol Upload Manual untuk Mengirim Seluruh Data Aktif ke Google Sheet
-        async function manualUploadToGAS() {
+        async function manualUploadToSheet() {
             const uploadBtn = document.getElementById('uploadBtn');
             const uploadIcon = document.getElementById('uploadIcon');
             const uploadText = document.getElementById('uploadText');
 
-            uploadBtn.disabled = true;
-            uploadIcon.classList.add('fa-spin');
-            uploadText.innerText = "Uploading...";
+            if (uploadBtn) uploadBtn.disabled = true;
+            if (uploadIcon) uploadIcon.classList.add('fa-spin');
+            if (uploadText) uploadText.innerText = "Uploading...";
 
             try {
                 for (let item of bargingData) {
-                    await fetch(DEFAULT_GAS_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(item)
-                    });
+                    await sendToGoogleSheet(item);
                 }
-                uploadText.innerText = "Uploaded";
+                if (uploadText) uploadText.innerText = "Uploaded!";
                 alert("Semua data berhasil di-upload ke Google Sheet!");
             } catch (err) {
-                console.error("Upload massal gagal:", err);
-                uploadText.innerText = "Upload Fail";
-                alert("Terjadi kesalahan saat meng-upload data.");
+                console.error("Upload gagal:", err);
+                if (uploadText) uploadText.innerText = "Upload Fail";
             } finally {
-                uploadBtn.disabled = false;
-                uploadIcon.classList.remove('fa-spin');
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (uploadIcon) uploadIcon.classList.remove('fa-spin');
                 setTimeout(() => {
-                    uploadText.innerText = "Upload ke Sheet";
+                    if (uploadText) uploadText.innerText = "Upload ke Sheet";
                 }, 2000);
             }
         }
@@ -902,8 +906,8 @@
                 bargingData.push(itemData);
             }
 
-            // Kirim data baru langsung 1 arah ke Google Sheet via POST
-            saveShipmentToGAS(itemData);
+            // Kirim otomatis data baru ke Google Sheet via POST
+            sendToGoogleSheet(itemData);
 
             renderTable();
             closeModal();
@@ -926,8 +930,9 @@
             });
         }
 
+        // OTOMATIS AMBIL DATA DARI GOOGLE SHEET SAAT HALAMAN DIBUKA / DI-REFRESH
         window.onload = function() {
-            renderTable();
+            fetchFromGAS();
         };
     </script>
 </body>
