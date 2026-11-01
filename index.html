@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT Sandai Kemakmuran Utama - Dashboard Barging</title>
+    <title>PT Sandai Kemakmuran Utama - Dashboard Barging & Quality Control</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -46,13 +46,14 @@
                     </div>
                 </div>
 
-                <!-- Action Toolbar Buttons (Horizontal Scroll di HP) -->
+                <!-- Action Toolbar Buttons -->
                 <div class="flex items-center space-x-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 mobile-scroll shrink-0">
-                    <button id="syncBtn" onclick="fetchFromGAS()" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i id="syncIcon" class="fa-solid fa-rotate"></i> Sync Sheet
+                    <!-- Tombol Upload ke Google Sheet (1 Arah) -->
+                    <button id="uploadBtn" onclick="manualUploadToGAS()" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
+                        <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up"></i> <span id="uploadText">Upload ke Sheet</span>
                     </button>
 
-                    <a href="https://docs.google.com/spreadsheets/d/1aPzvyYkxn_eP4X9cDPtnAcNW7P7fdE3RlGememMX7PA/edit" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
+                    <a href="https://docs.google.com/spreadsheets/d/1dwZ7zI8fjxy5s1KODFjNMdHJFFsuhAYzEXLZLEAiNgo/edit" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
                         <i class="fa-solid fa-file-excel"></i> Buka Sheet
                     </a>
 
@@ -78,7 +79,7 @@
 
     <main id="capture-area" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 bg-white">
 
-        <!-- Toolbar Pemilihan Periode Waktu -->
+        <!-- Toolbar Filter Periode Waktu -->
         <section class="bg-slate-50 p-3 sm:p-4 border border-slate-300 no-print flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-calendar-days text-blue-600 text-base"></i>
@@ -101,7 +102,6 @@
                     </div>
                 </div>
 
-                <!-- Tombol Preset Cepat -->
                 <div class="flex items-center space-x-1 sm:border-l border-slate-300 sm:pl-3 pt-2 sm:pt-0 border-t sm:border-t-0 justify-between sm:justify-start">
                     <button onclick="setPresetPeriod('ALL')" class="flex-1 sm:flex-none px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 font-medium text-slate-700">Semua</button>
                     <button onclick="setPresetPeriod('THIS_MONTH')" class="flex-1 sm:flex-none px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 font-medium text-slate-700">Bulan Ini</button>
@@ -111,7 +111,7 @@
             </div>
         </section>
 
-        <!-- KPI Summary Cards (Grid Mobile Friendly) -->
+        <!-- KPI Summary Cards -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div class="bg-white p-4 sm:p-5 border border-slate-300">
                 <div class="flex justify-between items-start">
@@ -219,7 +219,7 @@
             </div>
         </div>
 
-        <!-- Data Table Container (Responsive Horizontal Scroll) -->
+        <!-- Data Table Container -->
         <section class="bg-white border border-slate-300 overflow-hidden">
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex justify-between items-center">
                 <h2 class="font-bold text-slate-800 text-sm sm:text-base">Log Data Barging & Pengapalan SKU</h2>
@@ -269,7 +269,7 @@
 
     </main>
 
-    <!-- Modal Form Input & Edit Data (Mobile Scrollable) -->
+    <!-- Modal Form Input & Edit Data -->
     <div id="shipmentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-3 sm:p-4 no-print overflow-y-auto">
         <div class="bg-white border border-slate-300 max-w-3xl w-full p-4 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
@@ -369,7 +369,7 @@
 
                 <div class="flex justify-end space-x-2 pt-4 border-t sticky bottom-0 bg-white">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Simpan Data</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Simpan Data & Kirim ke Sheet</button>
                 </div>
             </form>
         </div>
@@ -377,6 +377,10 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        // URL Web App Google Apps Script 1 Arah (POST)
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxU1ngTBMvfUyQq8hqP-MbFaWxTvXo4EjO-9jJcIRv7IJ57Pmy1ndciJkqVvMAzKdMrUQ/exec";
+
+        // Data statis lokal untuk tampilan dashboard awal
         let bargingData = [
             {
                 no_shipment: 26,
@@ -451,9 +455,9 @@
                 param_max_al2o3: 46,
                 param_max_sio2: 15,
                 param_max_rsio2: 5,
-                coa_barging_al2o3: 0,
-                coa_barging_sio2: 0,
-                coa_barging_rsio2: 0,
+                coa_barging_al2o3: 48.10,
+                coa_barging_sio2: 12.80,
+                coa_barging_rsio2: 4.20,
                 loading_start_tgl: "2026-10-22",
                 loading_start_jam: "18:56",
                 loading_finish_tgl: "2026-10-23",
@@ -464,129 +468,9 @@
                 keberangkatan_tgl: "2026-10-24",
                 keberangkatan_jam: "13:16",
                 tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
-            },
-            {
-                no_shipment: 29,
-                nama_tb_tongkang: "Kaltim Dolphin 10-18 / Finacia 38",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-24",
-                tambat_tali_jam: "14:40",
-                draft_inisial: 1592.549,
-                draft_inter: 8539.723,
-                draft_final: 6947.174,
-                ritase_dt: 272,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 0,
-                coa_barging_sio2: 0,
-                coa_barging_rsio2: 0,
-                loading_start_tgl: "2026-10-24",
-                loading_start_jam: "19:32",
-                loading_finish_tgl: "2026-10-25",
-                loading_finish_jam: "15:40",
-                waktu_loading_total: "20:08:00",
-                lepas_tali_tgl: "2026-10-25",
-                lepas_tali_jam: "16:09",
-                keberangkatan_tgl: "2026-10-27",
-                keberangkatan_jam: "05:24",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
-            },
-            {
-                no_shipment: 30,
-                nama_tb_tongkang: "Prima Sakti II / Finacia 70",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-27",
-                tambat_tali_jam: "14:32",
-                draft_inisial: 1372.536,
-                draft_inter: 8495.199,
-                draft_final: 7122.663,
-                ritase_dt: 265,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 0,
-                coa_barging_sio2: 0,
-                coa_barging_rsio2: 0,
-                loading_start_tgl: "2026-10-27",
-                loading_start_jam: "16:25",
-                loading_finish_tgl: "2026-10-28",
-                loading_finish_jam: "11:35",
-                waktu_loading_total: "19:10:00",
-                lepas_tali_tgl: "2026-10-28",
-                lepas_tali_jam: "12:33",
-                keberangkatan_tgl: "2026-10-29",
-                keberangkatan_jam: "06:30",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
-            },
-            {
-                no_shipment: 31,
-                nama_tb_tongkang: "Mega Sukses XV / Manna Lines 9003",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-29",
-                tambat_tali_jam: "11:47",
-                draft_inisial: 1517.254,
-                draft_inter: 8649.948,
-                draft_final: 7132.694,
-                ritase_dt: 256,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 0,
-                coa_barging_sio2: 0,
-                coa_barging_rsio2: 0,
-                loading_start_tgl: "2026-10-29",
-                loading_start_jam: "14:07",
-                loading_finish_tgl: "2026-10-30",
-                loading_finish_jam: "11:30",
-                waktu_loading_total: "21:23:00",
-                lepas_tali_tgl: "2026-10-30",
-                lepas_tali_jam: "14:15",
-                keberangkatan_tgl: "2026-10-31",
-                keberangkatan_jam: "08:48",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
-            },
-            {
-                no_shipment: 32,
-                nama_tb_tongkang: "Sebuku / Citeurup 1",
-                kapasitas: 300,
-                tambat_tali_tgl: "2026-10-31",
-                tambat_tali_jam: "14:30",
-                draft_inisial: 0,
-                draft_inter: 0,
-                draft_final: 0,
-                ritase_dt: 0,
-                param_max_al2o3: 46,
-                param_max_sio2: 15,
-                param_max_rsio2: 5,
-                coa_barging_al2o3: 0,
-                coa_barging_sio2: 0,
-                coa_barging_rsio2: 0,
-                loading_start_tgl: "2026-10-31",
-                loading_start_jam: "15:39",
-                loading_finish_tgl: "",
-                loading_finish_jam: "",
-                waktu_loading_total: "",
-                lepas_tali_tgl: "",
-                lepas_tali_jam: "",
-                keberangkatan_tgl: "",
-                keberangkatan_jam: "",
-                tujuan: "BAP SMELTER",
-                coa_discharge_al2o3: 0,
-                coa_discharge_sio2: 0,
-                coa_discharge_rsio2: 0
+                coa_discharge_al2o3: 48.50,
+                coa_discharge_sio2: 12.10,
+                coa_discharge_rsio2: 4.00
             }
         ];
 
@@ -594,13 +478,21 @@
         let draftChart = null;
         let coaChart = null;
 
-        function getGasUrl() {
-            return localStorage.getItem('gasUrl') || '';
+        // FUNGSI PARSER ANGKA
+        function parseNum(val) {
+            if (val === null || val === undefined || val === "" || val === "-") return 0;
+            if (typeof val === 'number') return val;
+            var str = val.toString().trim();
+            if (str.indexOf(',') !== -1) {
+                str = str.replace(/\./g, '').replace(',', '.');
+            }
+            return parseFloat(str) || 0;
         }
 
         function formatNum(num) {
-            if (num === null || num === undefined || num === 0) return "-";
-            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(num);
+            const parsed = parseNum(num);
+            if (parsed === 0) return "-";
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(parsed);
         }
 
         function formatSimpleDate(dateStr, timeStr) {
@@ -613,34 +505,55 @@
             return timeStr ? `${formattedDate} ${timeStr}` : formattedDate;
         }
 
-        async function fetchFromGAS() {
-            const url = getGasUrl();
-            if (!url) {
-                alert("Harap masukkan URL Google Apps Script Web App Anda terlebih dahulu!");
-                return;
+        // Fungsi Kirim Data 1 Arah (POST) dari Dashboard ke Google Sheet
+        async function saveShipmentToGAS(itemData) {
+            try {
+                await fetch(DEFAULT_GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(itemData)
+                });
+                alert("Data berhasil di-upload ke Google Sheet!");
+            } catch (error) {
+                console.error("Gagal mengirim data ke Google Sheet:", error);
+                alert("Gagal mengunggah data ke Google Sheet.");
             }
+        }
 
-            const syncBtn = document.getElementById('syncBtn');
-            const syncIcon = document.getElementById('syncIcon');
+        // Tombol Upload Manual untuk Mengirim Seluruh Data Aktif ke Google Sheet
+        async function manualUploadToGAS() {
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadIcon = document.getElementById('uploadIcon');
+            const uploadText = document.getElementById('uploadText');
 
-            if (syncBtn) syncBtn.disabled = true;
-            if (syncIcon) syncIcon.classList.add('fa-spin');
+            uploadBtn.disabled = true;
+            uploadIcon.classList.add('fa-spin');
+            uploadText.innerText = "Uploading...";
 
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                if (Array.isArray(data) && data.length > 0) {
-                    bargingData = data;
-                    renderTable();
-                    setTimeout(() => alert("Data Google Sheet berhasil disinkronisasi!"), 100);
+                for (let item of bargingData) {
+                    await fetch(DEFAULT_GAS_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(item)
+                    });
                 }
+                uploadText.innerText = "Uploaded";
+                alert("Semua data berhasil di-upload ke Google Sheet!");
             } catch (err) {
-                alert("Gagal melakukan Sync. Pastikan Web App diset ke 'Anyone'.");
-                console.error(err);
+                console.error("Upload massal gagal:", err);
+                uploadText.innerText = "Upload Fail";
+                alert("Terjadi kesalahan saat meng-upload data.");
             } finally {
-                if (syncBtn) syncBtn.disabled = false;
-                if (syncIcon) syncIcon.classList.remove('fa-spin');
+                uploadBtn.disabled = false;
+                uploadIcon.classList.remove('fa-spin');
+                setTimeout(() => {
+                    uploadText.innerText = "Upload ke Sheet";
+                }, 2000);
             }
         }
 
@@ -706,8 +619,8 @@
             });
 
             currentFilteredData.forEach((item, index) => {
-                totalTonnage += item.draft_final || 0;
-                totalRitase += item.ritase_dt || 0;
+                totalTonnage += parseNum(item.draft_final);
+                totalRitase += parseNum(item.ritase_dt);
                 if (item.keberangkatan_tgl) completedCount++;
 
                 const bgRow = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
@@ -778,13 +691,8 @@
             let finalDraftData = [];
 
             currentFilteredData.forEach(item => {
-                let formattedDate = "-";
-                if (item.tambat_tali_tgl) {
-                    const parts = item.tambat_tali_tgl.split('-');
-                    if (parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                }
                 labels.push([`Shipment #${item.no_shipment}`, item.nama_tb_tongkang]);
-                finalDraftData.push(item.draft_final || 0);
+                finalDraftData.push(parseNum(item.draft_final));
             });
 
             if (draftChart) draftChart.destroy();
@@ -796,8 +704,7 @@
                     datasets: [{
                         label: 'Draft Final (MT)',
                         data: finalDraftData,
-                        backgroundColor: '#10b981',
-                        borderRadius: 0
+                        backgroundColor: '#10b981'
                     }]
                 },
                 options: {
@@ -809,7 +716,7 @@
             });
         }
 
-        // Grafik 2: COA Barging vs COA Discharge
+        // Grafik 2: Analisis COA Kimia
         function updateCoaChart() {
             const ctx = document.getElementById('coaChart').getContext('2d');
             const mode = document.getElementById('coaSourceFilter').value;
@@ -824,19 +731,27 @@
             let limitRsio2Data = [];
 
             currentFilteredData.forEach(item => {
-                labels.push([`Shipment #${item.no_shipment}`, item.nama_tb_tongkang]);
+                labels.push([`Shipment #${item.no_shipment}`, item.nama_tb_tongkang.split('/')[0].trim()]);
 
-                bargingAl2o3.push(item.coa_barging_al2o3 || 0);
-                bargingSio2.push(item.coa_barging_sio2 || 0);
-                bargingRsio2.push(item.coa_barging_rsio2 || 0);
+                const bAl = parseNum(item.coa_barging_al2o3);
+                const bSi = parseNum(item.coa_barging_sio2);
+                const bRsi = parseNum(item.coa_barging_rsio2);
 
-                dischargeAl2o3.push(item.coa_discharge_al2o3 || 0);
-                dischargeSio2.push(item.coa_discharge_sio2 || 0);
-                dischargeRsio2.push(item.coa_discharge_rsio2 || 0);
+                const dAl = parseNum(item.coa_discharge_al2o3);
+                const dSi = parseNum(item.coa_discharge_sio2);
+                const dRsi = parseNum(item.coa_discharge_rsio2);
 
-                limitAl2o3Data.push(item.param_max_al2o3 || 46);
-                limitSio2Data.push(item.param_max_sio2 || 15);
-                limitRsio2Data.push(item.param_max_rsio2 || 5);
+                bargingAl2o3.push(bAl > 0 ? bAl : null);
+                bargingSio2.push(bSi > 0 ? bSi : null);
+                bargingRsio2.push(bRsi > 0 ? bRsi : null);
+
+                dischargeAl2o3.push(dAl > 0 ? dAl : null);
+                dischargeSio2.push(dSi > 0 ? dSi : null);
+                dischargeRsio2.push(dRsi > 0 ? dRsi : null);
+
+                limitAl2o3Data.push(parseNum(item.param_max_al2o3) || 46);
+                limitSio2Data.push(parseNum(item.param_max_sio2) || 15);
+                limitRsio2Data.push(parseNum(item.param_max_rsio2) || 5);
             });
 
             if (coaChart) coaChart.destroy();
@@ -845,35 +760,34 @@
 
             if (mode === 'BOTH') {
                 activeDatasets = [
-                    { label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb', borderRadius: 0 },
-                    { label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa', borderRadius: 0 },
-                    { label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706', borderRadius: 0 },
-                    { label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24', borderRadius: 0 },
-                    { label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed', borderRadius: 0 },
-                    { label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc', borderRadius: 0 }
+                    { type: 'bar', label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb' },
+                    { type: 'bar', label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa' },
+                    { type: 'bar', label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706' },
+                    { type: 'bar', label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24' },
+                    { type: 'bar', label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed' },
+                    { type: 'bar', label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc' }
                 ];
             } else if (mode === 'BARGING') {
                 activeDatasets = [
-                    { label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb', borderRadius: 0 },
-                    { label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706', borderRadius: 0 },
-                    { label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed', borderRadius: 0 }
+                    { type: 'bar', label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb' },
+                    { type: 'bar', label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706' },
+                    { type: 'bar', label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed' }
                 ];
             } else if (mode === 'DISCHARGE') {
                 activeDatasets = [
-                    { label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa', borderRadius: 0 },
-                    { label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24', borderRadius: 0 },
-                    { label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc', borderRadius: 0 }
+                    { type: 'bar', label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa' },
+                    { type: 'bar', label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24' },
+                    { type: 'bar', label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc' }
                 ];
             }
 
             activeDatasets.push(
-                { label: 'Batas Al₂O₃ Min (46%)', data: limitAl2o3Data, type: 'line', borderColor: '#ef4444', borderWidth: 2, fill: false, pointRadius: 2, pointBackgroundColor: '#ef4444' },
-                { label: 'Batas SiO₂ Max (15%)', data: limitSio2Data, type: 'line', borderColor: '#f97316', borderWidth: 2, borderDash: [6, 3], fill: false, pointRadius: 0 },
-                { label: 'Batas R-SiO₂ Max (5%)', data: limitRsio2Data, type: 'line', borderColor: '#d946ef', borderWidth: 2, borderDash: [3, 3], fill: false, pointRadius: 0 }
+                { type: 'line', label: 'Batas Al₂O₃ Min (46%)', data: limitAl2o3Data, borderColor: '#ef4444', borderWidth: 2, fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444' },
+                { type: 'line', label: 'Batas SiO₂ Max (15%)', data: limitSio2Data, borderColor: '#f97316', borderWidth: 2, borderDash: [6, 3], fill: false, pointRadius: 0 },
+                { type: 'line', label: 'Batas R-SiO₂ Max (5%)', data: limitRsio2Data, borderColor: '#d946ef', borderWidth: 2, borderDash: [3, 3], fill: false, pointRadius: 0 }
             );
 
             coaChart = new Chart(ctx, {
-                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: activeDatasets
@@ -885,15 +799,25 @@
                         legend: { position: 'top' },
                         tooltip: {
                             callbacks: {
-                                title: function(context) {
-                                    const l = context[0].label;
-                                    return Array.isArray(l) ? l.join(' - ') : l;
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    } else {
+                                        label += 'Belum ada data';
+                                    }
+                                    return label;
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Kadar / Persentase (%)' } }
+                        y: { 
+                            beginAtZero: true, 
+                            max: 60,
+                            title: { display: true, text: 'Kadar / Persentase (%)' } 
+                        }
                     }
                 }
             });
@@ -949,22 +873,22 @@
             const editIndex = parseInt(document.getElementById('editIndex').value);
 
             const itemData = {
-                no_shipment: parseInt(document.getElementById('no_shipment').value),
+                no_shipment: parseNum(document.getElementById('no_shipment').value),
                 nama_tb_tongkang: document.getElementById('nama_tb_tongkang').value,
                 kapasitas: 300,
                 param_max_al2o3: 46,
                 param_max_sio2: 15,
                 param_max_rsio2: 5,
-                coa_barging_al2o3: parseFloat(document.getElementById('coa_barging_al2o3').value) || 0,
-                coa_barging_sio2: parseFloat(document.getElementById('coa_barging_sio2').value) || 0,
-                coa_barging_rsio2: parseFloat(document.getElementById('coa_barging_rsio2').value) || 0,
-                coa_discharge_al2o3: parseFloat(document.getElementById('coa_discharge_al2o3').value) || 0,
-                coa_discharge_sio2: parseFloat(document.getElementById('coa_discharge_sio2').value) || 0,
-                coa_discharge_rsio2: parseFloat(document.getElementById('coa_discharge_rsio2').value) || 0,
-                draft_inisial: parseFloat(document.getElementById('draft_inisial').value) || 0,
-                draft_inter: parseFloat(document.getElementById('draft_inter').value) || 0,
-                draft_final: parseFloat(document.getElementById('draft_final').value) || 0,
-                ritase_dt: parseInt(document.getElementById('ritase_dt').value) || 0,
+                coa_barging_al2o3: parseNum(document.getElementById('coa_barging_al2o3').value),
+                coa_barging_sio2: parseNum(document.getElementById('coa_barging_sio2').value),
+                coa_barging_rsio2: parseNum(document.getElementById('coa_barging_rsio2').value),
+                coa_discharge_al2o3: parseNum(document.getElementById('coa_discharge_al2o3').value),
+                coa_discharge_sio2: parseNum(document.getElementById('coa_discharge_sio2').value),
+                coa_discharge_rsio2: parseNum(document.getElementById('coa_discharge_rsio2').value),
+                draft_inisial: parseNum(document.getElementById('draft_inisial').value),
+                draft_inter: parseNum(document.getElementById('draft_inter').value),
+                draft_final: parseNum(document.getElementById('draft_final').value),
+                ritase_dt: parseNum(document.getElementById('ritase_dt').value),
                 loading_start_tgl: document.getElementById('loading_start_tgl').value,
                 loading_start_jam: document.getElementById('loading_start_jam').value,
                 loading_finish_tgl: document.getElementById('loading_finish_tgl').value,
@@ -977,6 +901,9 @@
             } else {
                 bargingData.push(itemData);
             }
+
+            // Kirim data baru langsung 1 arah ke Google Sheet via POST
+            saveShipmentToGAS(itemData);
 
             renderTable();
             closeModal();
@@ -999,7 +926,9 @@
             });
         }
 
-        window.onload = renderTable;
+        window.onload = function() {
+            renderTable();
+        };
     </script>
 </body>
 </html>
