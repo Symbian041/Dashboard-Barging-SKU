@@ -183,12 +183,21 @@
             </div>
         </section>
 
-        <!-- GRAFIK 2: Perbandingan COA Barging vs COA Discharge vs Batas Kontrak -->
+        <!-- GRAFIK 2: Analisis COA Kimia dengan Pilihan Sumber Data -->
         <section class="bg-white p-5 border border-slate-300 space-y-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
                 <div>
-                    <h2 class="font-bold text-slate-800 text-lg">Grafik Analisis Kualitas Kimia: COA Barging vs COA Discharge (%)</h2>
-                    <p class="text-xs text-slate-500">Perbandingan Kadar Al₂O₃, SiO₂, & R-SiO₂ (Barging vs Discharge) Terhadap Batas Parameter Kontrak</p>
+                    <h2 class="font-bold text-slate-800 text-lg">Grafik Analisis Kualitas COA Kimia (%)</h2>
+                    <p class="text-xs text-slate-500">Perbandingan Kadar Al₂O₃, SiO₂, & R-SiO₂ Terhadap Batas Parameter Kontrak</p>
+                </div>
+                <!-- Dropdown Pemilihan Sumber COA -->
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="text-slate-600 font-medium">Tampilkan Data:</span>
+                    <select id="coaSourceFilter" onchange="updateCoaChart()" class="border border-slate-300 px-3 py-1.5 bg-white font-semibold text-indigo-700 outline-none">
+                        <option value="BOTH">Sandingkan (COA Barging vs Discharge)</option>
+                        <option value="BARGING">Hanya COA BARGING</option>
+                        <option value="DISCHARGE">Hanya COA DISCHARGE</option>
+                    </select>
                 </div>
             </div>
             <div class="relative w-full h-96">
@@ -370,7 +379,6 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Data disesuaikan persis dengan isi Google Sheet "BARGING SKU"
         let bargingData = [
             {
                 no_shipment: 26,
@@ -730,7 +738,7 @@
                         <td class="py-3 px-2 text-center border-r border-slate-200 font-semibold text-indigo-700 bg-indigo-50/30">${formatNum(item.coa_barging_sio2)}%</td>
                         <td class="py-3 px-2 text-center border-r border-slate-200 font-semibold text-indigo-700 bg-indigo-50/30">${formatNum(item.coa_barging_rsio2)}%</td>
 
-                        <!-- Data Kimia COA Discharge (Shipment #27 terisi: 49.20%, 11.70%, 3.81%) -->
+                        <!-- Data Kimia COA Discharge -->
                         <td class="py-3 px-2 text-center border-r border-slate-200 font-semibold text-cyan-700 bg-cyan-50/30">${formatNum(item.coa_discharge_al2o3)}%</td>
                         <td class="py-3 px-2 text-center border-r border-slate-200 font-semibold text-cyan-700 bg-cyan-50/30">${formatNum(item.coa_discharge_sio2)}%</td>
                         <td class="py-3 px-2 text-center border-r border-slate-200 font-semibold text-cyan-700 bg-cyan-50/30">${formatNum(item.coa_discharge_rsio2)}%</td>
@@ -804,9 +812,10 @@
             });
         }
 
-        // Grafik 2: Perbandingan COA Barging vs COA Discharge vs Garis Batas Kontrak
+        // Grafik 2: Dinamis berdasarkan Pilihan Dropdown (BOTH / BARGING / DISCHARGE)
         function updateCoaChart() {
             const ctx = document.getElementById('coaChart').getContext('2d');
+            const mode = document.getElementById('coaSourceFilter').value;
 
             let labels = [];
             let bargingAl2o3 = [], dischargeAl2o3 = [];
@@ -820,17 +829,14 @@
             currentFilteredData.forEach(item => {
                 labels.push([`Shipment #${item.no_shipment}`, item.nama_tb_tongkang]);
 
-                // Data Barging
                 bargingAl2o3.push(item.coa_barging_al2o3 || 0);
                 bargingSio2.push(item.coa_barging_sio2 || 0);
                 bargingRsio2.push(item.coa_barging_rsio2 || 0);
 
-                // Data Discharge (Termasuk Shipment #27: Al2O3 = 49.20%, SiO2 = 11.70%, R-SiO2 = 3.81%)
                 dischargeAl2o3.push(item.coa_discharge_al2o3 || 0);
                 dischargeSio2.push(item.coa_discharge_sio2 || 0);
                 dischargeRsio2.push(item.coa_discharge_rsio2 || 0);
 
-                // Garis Batas Parameter Kontrak
                 limitAl2o3Data.push(item.param_max_al2o3 || 46);
                 limitSio2Data.push(item.param_max_sio2 || 15);
                 limitRsio2Data.push(item.param_max_rsio2 || 5);
@@ -838,28 +844,43 @@
 
             if (coaChart) coaChart.destroy();
 
+            let activeDatasets = [];
+
+            if (mode === 'BOTH') {
+                activeDatasets = [
+                    { label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb', borderRadius: 0 },
+                    { label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa', borderRadius: 0 },
+                    { label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706', borderRadius: 0 },
+                    { label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24', borderRadius: 0 },
+                    { label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed', borderRadius: 0 },
+                    { label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc', borderRadius: 0 }
+                ];
+            } else if (mode === 'BARGING') {
+                activeDatasets = [
+                    { label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb', borderRadius: 0 },
+                    { label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706', borderRadius: 0 },
+                    { label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed', borderRadius: 0 }
+                ];
+            } else if (mode === 'DISCHARGE') {
+                activeDatasets = [
+                    { label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa', borderRadius: 0 },
+                    { label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24', borderRadius: 0 },
+                    { label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc', borderRadius: 0 }
+                ];
+            }
+
+            // Tambahkan Garis Batas Kontrak
+            activeDatasets.push(
+                { label: 'Batas Al₂O₃ Minimal (46%)', data: limitAl2o3Data, type: 'line', borderColor: '#ef4444', borderWidth: 2.5, fill: false, pointRadius: 4, pointBackgroundColor: '#ef4444' },
+                { label: 'Batas SiO₂ Maksimal (15%)', data: limitSio2Data, type: 'line', borderColor: '#f97316', borderWidth: 2, borderDash: [8, 4], fill: false, pointRadius: 0 },
+                { label: 'Batas R-SiO₂ Maksimal (5%)', data: limitRsio2Data, type: 'line', borderColor: '#d946ef', borderWidth: 2, borderDash: [3, 3], fill: false, pointRadius: 0 }
+            );
+
             coaChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [
-                        // Al2O3 Pair
-                        { label: 'Al₂O₃ Barging (%)', data: bargingAl2o3, backgroundColor: '#2563eb', borderRadius: 0 },
-                        { label: 'Al₂O₃ Discharge (%)', data: dischargeAl2o3, backgroundColor: '#60a5fa', borderRadius: 0 },
-                        
-                        // SiO2 Pair
-                        { label: 'SiO₂ Barging (%)', data: bargingSio2, backgroundColor: '#d97706', borderRadius: 0 },
-                        { label: 'SiO₂ Discharge (%)', data: dischargeSio2, backgroundColor: '#fbbf24', borderRadius: 0 },
-                        
-                        // R-SiO2 Pair
-                        { label: 'R-SiO₂ Barging (%)', data: bargingRsio2, backgroundColor: '#7c3aed', borderRadius: 0 },
-                        { label: 'R-SiO₂ Discharge (%)', data: dischargeRsio2, backgroundColor: '#c084fc', borderRadius: 0 },
-
-                        // Batas Kontrak Lines
-                        { label: 'Batas Al₂O₃ Minimal (46%)', data: limitAl2o3Data, type: 'line', borderColor: '#ef4444', borderWidth: 2.5, fill: false, pointRadius: 4, pointBackgroundColor: '#ef4444' },
-                        { label: 'Batas SiO₂ Maksimal (15%)', data: limitSio2Data, type: 'line', borderColor: '#f97316', borderWidth: 2, borderDash: [8, 4], fill: false, pointRadius: 0 },
-                        { label: 'Batas R-SiO₂ Maksimal (5%)', data: limitRsio2Data, type: 'line', borderColor: '#d946ef', borderWidth: 2, borderDash: [3, 3], fill: false, pointRadius: 0 }
-                    ]
+                    datasets: activeDatasets
                 },
                 options: {
                     responsive: true,
