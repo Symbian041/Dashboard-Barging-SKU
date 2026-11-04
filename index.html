@@ -67,21 +67,19 @@
             </div>
         </section>
 
-        <!-- PANEL FILTER (DIPERBARUI) -->
+        <!-- PANEL FILTER -->
         <section class="bg-white p-4 border border-slate-200 shadow-sm rounded flex flex-wrap items-end gap-3 no-print">
             <div class="flex items-center text-slate-700 font-bold text-sm mr-2 pb-2">
                 <i class="fa-solid fa-filter mr-2"></i> Filter Data:
             </div>
             
-            <!-- Filter Bulanan -->
             <div>
-                <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Periode Bulan</label>
+                <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Periode Bulan (Lepas Tali)</label>
                 <input type="month" id="filter_month" onchange="onMonthChange()" class="border border-slate-300 p-2 text-sm outline-none rounded focus:ring-1 focus:ring-blue-500 cursor-pointer">
             </div>
 
             <div class="flex items-center pb-3 px-2 text-slate-400 text-[10px] font-bold uppercase">Atau</div>
 
-            <!-- Filter Rentang Tanggal -->
             <div>
                 <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Mulai Tgl</label>
                 <input type="date" id="filter_start" onchange="onDateRangeChange()" class="border border-slate-300 p-2 text-sm outline-none rounded focus:ring-1 focus:ring-blue-500 cursor-pointer">
@@ -91,7 +89,6 @@
                 <input type="date" id="filter_end" onchange="onDateRangeChange()" class="border border-slate-300 p-2 text-sm outline-none rounded focus:ring-1 focus:ring-blue-500 cursor-pointer">
             </div>
 
-            <!-- Filter Mode Tampilan Kualitas -->
             <div class="border-l border-slate-200 pl-4 ml-1">
                 <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Tampilan COA (Kolom)</label>
                 <select id="filter_mode" onchange="applyFilters()" class="border border-slate-300 p-2 text-sm outline-none rounded focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer">
@@ -101,7 +98,6 @@
                 </select>
             </div>
 
-            <!-- Tombol Reset -->
             <div class="ml-auto">
                 <button onclick="resetFilters()" class="text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium px-4 py-2.5 border border-slate-300 rounded transition">
                     <i class="fa-solid fa-xmark mr-1"></i> Reset
@@ -109,7 +105,7 @@
             </div>
         </section>
 
-        <!-- Charts (Masing-masing 1 baris memanjang) -->
+        <!-- Charts -->
         <section class="space-y-6">
             <!-- Grafik Cargo -->
             <div class="bg-white p-4 border border-slate-200 shadow-sm rounded w-full">
@@ -151,7 +147,6 @@
             
             <div class="p-6 overflow-y-auto">
                 <form id="dataForm" onsubmit="saveShipment(event)" class="space-y-6 text-xs">
-                    <!-- Detail Pengapalan -->
                     <div>
                         <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">1. Identitas & Waktu Pengapalan</h4>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -170,7 +165,6 @@
                         </div>
                     </div>
 
-                    <!-- Detail Displacement -->
                     <div class="bg-emerald-50/50 p-4 border border-emerald-100 rounded">
                         <h4 class="font-bold text-emerald-800 border-b border-emerald-200 pb-1 mb-3">2. Net Displacement & Kargo</h4>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -193,7 +187,6 @@
                         </div>
                     </div>
 
-                    <!-- Kualitas Kimia -->
                     <div>
                         <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">3. Analisis Kualitas (COA)</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,7 +209,6 @@
                         </div>
                     </div>
 
-                    <!-- Waktu Penyelesaian -->
                     <div>
                         <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">4. Milestone Keberangkatan</h4>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -290,17 +282,15 @@
             finally { icon.classList.remove('fa-spin'); }
         }
 
-        // --- LOGIKA FILTER DATA ---
+        // --- LOGIKA FILTER DATA (BERDASARKAN LEPAS TALI) ---
 
         function onMonthChange() {
-            // Jika pilih bulan, bersihkan rentang tanggal
             document.getElementById('filter_start').value = '';
             document.getElementById('filter_end').value = '';
             applyFilters();
         }
 
         function onDateRangeChange() {
-            // Jika pilih rentang tanggal, bersihkan pilihan bulan
             document.getElementById('filter_month').value = '';
             applyFilters();
         }
@@ -308,23 +298,20 @@
         function applyFilters() {
             const startStr = document.getElementById('filter_start').value;
             const endStr = document.getElementById('filter_end').value;
-            const monthStr = document.getElementById('filter_month').value; // Format: YYYY-MM
+            const monthStr = document.getElementById('filter_month').value;
 
             filteredData = rawData.filter(item => {
-                // Dasar filter adalah tanggal tambat tali kapal
-                const itemDate = item.tambat_tali ? item.tambat_tali.substring(0, 10) : ""; 
+                // Menggunakan item.lepas_tali sebagai acuan filter waktu
+                const itemDate = item.lepas_tali ? item.lepas_tali.substring(0, 10) : ""; 
                 
                 if (!itemDate) {
-                    // Jika ada data tanpa tanggal, abaikan jika pengguna sedang memfilter waktu
                     if (startStr || endStr || monthStr) return false; 
                     return true;
                 }
 
-                // Filter Bulan
                 if (monthStr) {
                     if (!itemDate.startsWith(monthStr)) return false;
                 } 
-                // Filter Rentang Waktu (Jika Bulan tidak dipakai)
                 else {
                     if (startStr && itemDate < startStr) return false;
                     if (endStr && itemDate > endStr) return false;
@@ -345,14 +332,13 @@
             applyFilters();
         }
 
-        // --- RENDER TABEL & GRAFIK ---
+        // --- RENDER TABEL ---
 
         function renderTable() {
             const mode = document.getElementById('filter_mode').value;
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('table-body');
             
-            // 1. Render Table Header secara dinamis
             let theadHTML = `
                 <tr>
                     <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">No</th>
@@ -391,7 +377,6 @@
             theadHTML += `</tr>`;
             thead.innerHTML = theadHTML;
 
-            // 2. Render Table Body (data terfilter)
             tbody.innerHTML = '';
             let tCargo = 0, tRitase = 0, cCount = 0;
 
@@ -432,7 +417,6 @@
                 tbody.innerHTML += tr;
             });
 
-            // Update KPI Text 
             document.getElementById('stat-total').innerText = filteredData.length;
             document.getElementById('stat-tonnage').innerHTML = `${tCargo.toLocaleString('id-ID', {maximumFractionDigits:2})} <span class="text-xs font-normal text-slate-500">MT</span>`;
             document.getElementById('stat-ritase').innerText = tRitase;
@@ -440,16 +424,21 @@
             document.getElementById('record-count').innerText = `${filteredData.length} Data Ditampilkan`;
         }
 
+        // --- RENDER GRAFIK ---
+
         function updateCharts() {
             const mode = document.getElementById('filter_mode').value;
 
-            // 1. Chart Tonase / Cargo 
+            // 1. Chart Tonase / Cargo (Label menggunakan Tanggal Lepas Tali)
             const ctx1 = document.getElementById('draftChart').getContext('2d');
             if (draftChart) draftChart.destroy();
             draftChart = new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: filteredData.map(i => `#${i.no_shipment} - ${i.nama_tb_tongkang}`),
+                    labels: filteredData.map(i => {
+                        let tgl = i.lepas_tali ? i.lepas_tali.substring(0, 10) : '-';
+                        return `#${i.no_shipment} (${tgl})`;
+                    }),
                     datasets: [{ 
                         label: 'Cargo Loaded (MT)', 
                         data: filteredData.map(i => parseNum(i.cargo_loaded)), 
@@ -459,7 +448,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
 
-            // 2. Chart COA (Berdasarkan Mode & Filter Waktu)
+            // 2. Chart COA 
             const ctx2 = document.getElementById('coaChart').getContext('2d');
             if (coaChart) coaChart.destroy();
 
